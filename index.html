@@ -288,14 +288,21 @@ let pendingSaves={},saveTimer=null,toastTimer=null,appReady=false;
 // ── INIT ──
 window.addEventListener('DOMContentLoaded',async()=>{
   SB=window.supabase.createClient(SUPA_URL,SUPA_KEY);
+
+  // Check existing session FIRST, before setting up listener
+  const {data:{session}}=await SB.auth.getSession();
+  if(session?.user){
+    user=session.user; appReady=true;
+    await loadAndRender();
+  }
+
+  // Listener only handles NEW logins and logouts, not page reload
   SB.auth.onAuthStateChange(async(event,session)=>{
-    if((event==='SIGNED_IN'||event==='TOKEN_REFRESHED')&&session?.user&&!appReady){
+    if(event==='SIGNED_IN'&&session?.user&&!appReady){
       user=session.user; appReady=true; await loadAndRender();
     }
     if(event==='SIGNED_OUT'){user=null;db={};appReady=false;}
   });
-  const {data:{session}}=await SB.auth.getSession();
-  if(session?.user&&!appReady){user=session.user;appReady=true;await loadAndRender();}
 });
 
 async function loadAndRender(){
