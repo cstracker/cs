@@ -301,6 +301,7 @@ window.addEventListener('DOMContentLoaded',async()=>{
 async function loadAndRender(){
   try{await loadData();}catch(e){console.error(e);}
   document.getElementById('loginOverlay').classList.add('hidden');
+  setMsg('','');   // ← ADD THIS LINE
   // Check if there's a pending name from signup (email confirmation flow)
   const pendingName = localStorage.getItem('gate_pending_name');
   if(pendingName && !db['user_name']){
