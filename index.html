@@ -962,283 +962,235 @@ document.addEventListener('click',e=>{if(e.target.id==='schModal')closeSchModal(
 </div>
 
 <!-- TIFFIN TRACKER SECTION -->
-<div id="tiffin-section" style="display:none;">
-  <div class="tiffin-container">
-    <div class="tiffin-header">
-      <div>
-        <div class="tiffin-title">🍱 Tiffin Tracker</div>
-        <div class="tiffin-title-sub">From 8 May 2026 · ₹50 Morning + ₹50 Evening · Paid ₹<span id="tiffin-total-paid">2000</span></div>
-      </div>
-    </div>
-
-    <div class="tiffin-stats-grid">
-      <div class="tiffin-stat-card">
-        <div class="tiffin-stat-value">₹<span id="tiffin-stat-paid">2000</span></div>
-        <div class="tiffin-stat-label">Total Paid</div>
-      </div>
-      <div class="tiffin-stat-card">
-        <div class="tiffin-stat-value used">₹<span id="tiffin-stat-used">0</span></div>
-        <div class="tiffin-stat-label">Total Used</div>
-      </div>
-      <div class="tiffin-stat-card">
-        <div class="tiffin-stat-value remaining">+₹<span id="tiffin-stat-remaining">2000</span></div>
-        <div class="tiffin-stat-label">Remaining</div>
-      </div>
-      <div class="tiffin-stat-card">
-        <div class="tiffin-stat-value"><span id="tiffin-stat-days">0</span>/<span id="tiffin-stat-total-days">70</span></div>
-        <div class="tiffin-stat-label">Days Used</div>
-      </div>
-    </div>
-
-    <div class="tiffin-content">
-      <div class="tiffin-section">
-        <div class="tiffin-section-title">💳 Payments</div>
-        <div class="tiffin-payments-list" id="tiffin-payments-list">
-          <div class="tiffin-payment-item">
-            <span class="tiffin-payment-date">2026-05-08</span>
-            <span class="tiffin-payment-amount">₹2000</span>
-            <button class="tiffin-payment-remove" onclick="removeTiffinPayment(0)">Remove</button>
-          </div>
-        </div>
-        <div class="tiffin-add-form">
-          <input type="number" id="tiffin-payment-amount" placeholder="₹ Amount" min="0">
-          <input type="date" id="tiffin-payment-date">
-          <button onclick="addTiffinPayment()">+ Add</button>
-        </div>
-      </div>
-
-      <div class="tiffin-section">
-        <div class="tiffin-section-title">📅 May 2026</div>
-        <div class="tiffin-calendar" id="tiffin-calendar-may"></div>
-        <div class="tiffin-cal-legend">
-          <div class="tiffin-cal-legend-item">
-            <div class="tiffin-cal-legend-color" style="background:rgba(74,158,255,0.5)"></div>
-            <span>Morning</span>
-          </div>
-          <div class="tiffin-cal-legend-item">
-            <div class="tiffin-cal-legend-color" style="background:rgba(255,140,66,0.5)"></div>
-            <span>Evening</span>
-          </div>
-          <div class="tiffin-cal-legend-item">
-            <div class="tiffin-cal-legend-color" style="background:rgba(74,158,255,0.5);border:1px solid rgba(74,158,255,0.8)"></div>
-            <span>Both</span>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <div class="tiffin-section" style="margin-bottom:0;">
-      <div class="tiffin-section-title">📊 Monthly Summary</div>
-      <div class="tiffin-months-grid" id="tiffin-months-grid"></div>
+<div class="sum">
+  <div class="si"><div class="sv" id="vPaid">₹0</div><div class="sl">Total Paid</div></div>
+  <div class="si"><div class="sv r" id="vUsed">₹0</div><div class="sl">Total Used</div></div>
+  <div class="si"><div class="sv g" id="vBal">₹0</div><div class="sl">Remaining</div></div>
 </div>
+
+<div class="main">
+  <div class="stitle">💰 Payments</div>
+  <div class="card">
+    <ul class="pay-list" id="payList"></ul>
+    <div class="add-row">
+      <input type="number" id="newAmt" placeholder="₹ Amount" min="1">
+      <input type="date" id="newDt">
+      <button onclick="addPay()">+ Add</button>
+    </div>
+  </div>
+
+  <div class="stitle">📅 Tiffin Log</div>
+  <div id="calArea"></div>
+
+  <div class="stitle">🧾 Bill Summary</div>
+  <div class="card">
+    <table class="btable">
+      <thead><tr><th>Month</th><th>☀️ M</th><th>🌙 E</th><th>Amount</th><th>Paid</th><th>Balance</th></tr></thead>
+      <tbody id="billBody"></tbody>
+    </table>
+  </div>
 </div>
+<div class="toast" id="toast"></div>
 
 <script>
-// ════════════════════════════════════════════════════════════════════════════
-// TIFFIN TRACKER MODULE
-// ════════════════════════════════════════════════════════════════════════════
+const RATE = 50;
 
-const TIFFIN_CONFIG = {
-  startDate: new Date(2026, 4, 8),
-  endDate: new Date(2026, 6, 15),
-  dailyCost: 100,
-  mealCost: 50
+// 2026, May 8 evening start, June ends 6
+const MONTHS = [
+  {yr:2026, mo:4, label:'May 2026',  startDay:8,  endDay:31},
+  {yr:2026, mo:5, label:'June 2026', startDay:1,  endDay:6}
+];
+
+// Today is 21 May 2026
+const TODAY_STR = '2026-05-21';
+
+// Pre-fill all days from May 8 evening up to today (May 21)
+// May 8 = evening only (started in evening)
+// May 9 to May 21 = both (morning + evening)
+function defaultMeals() {
+  const meals = {};
+  // May 8: evening only
+  meals['2026-05-08'] = 'evening';
+  // May 9 to May 21: both
+  for (let d = 9; d <= 21; d++) {
+    meals[`2026-05-${String(d).padStart(2,'0')}`] = 'both';
+  }
+  return meals;
+}
+
+let state = JSON.parse(localStorage.getItem('tiffin_2026')||'null') || {
+  payments:[{id:1,date:'2026-05-08',amount:2000,note:'Initial payment'}],
+  meals: defaultMeals()
 };
 
-function getTiffinPayments() {
-  return JSON.parse(localStorage.getItem('tiffinPayments')) || [
-    { date: '2026-05-08', amount: 2000 }
-  ];
-}
+const fmt = d => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+const toD = s => { const [y,m,d]=s.split('-').map(Number); return new Date(y,m-1,d); };
+const fmtLabel = s => toD(s).toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'});
+const ds = (yr,mo,d) => `${yr}-${String(mo+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+const today = () => TODAY_STR; // fixed to 21 May 2026
 
-function getTiffinAttendance() {
-  return JSON.parse(localStorage.getItem('tiffinAttendance')) || {};
-}
+function save(){ try{localStorage.setItem('tiffin_2026',JSON.stringify(state))}catch(e){} }
 
-function saveTiffinPayments(payments) {
-  localStorage.setItem('tiffinPayments', JSON.stringify(payments));
-  renderTiffin();
-}
+function mealCost(m){ if(m==='both') return 100; if(m==='morning'||m==='evening') return 50; return 0; }
 
-function saveTiffinAttendance(attendance) {
-  localStorage.setItem('tiffinAttendance', JSON.stringify(attendance));
-  renderTiffin();
-}
-
-function addTiffinPayment() {
-  const amount = document.getElementById('tiffin-payment-amount').value;
-  const date = document.getElementById('tiffin-payment-date').value;
-  
-  if (!amount || !date) {
-    showToast('⚠ Fill amount and date', 'warn');
-    return;
-  }
-  
-  const payments = getTiffinPayments();
-  payments.push({ date, amount: parseInt(amount) });
-  saveTiffinPayments(payments);
-  document.getElementById('tiffin-payment-amount').value = '';
-  showToast('✓ Payment added: ₹' + amount, 'ok');
-}
-
-function removeTiffinPayment(index) {
-  if (confirm('Remove this payment?')) {
-    const payments = getTiffinPayments();
-    payments.splice(index, 1);
-    saveTiffinPayments(payments);
-    showToast('✓ Payment removed', 'ok');
-  }
-}
-
-function toggleTiffinMeal(dateStr, currentMorning, currentEvening) {
-  const attendance = getTiffinAttendance();
-  
-  if (!attendance[dateStr]) {
-    attendance[dateStr] = { morning: false, evening: false };
-  }
-  
-  // Cycle: nothing → morning → evening → both → nothing
-  if (!currentMorning && !currentEvening) {
-    attendance[dateStr] = { morning: true, evening: false };
-  } else if (currentMorning && !currentEvening) {
-    attendance[dateStr] = { morning: false, evening: true };
-  } else if (!currentMorning && currentEvening) {
-    attendance[dateStr] = { morning: true, evening: true };
-  } else {
-    attendance[dateStr] = { morning: false, evening: false };
-  }
-  
-  saveTiffinAttendance(attendance);
-}
-
-function getTiffinStats() {
-  const payments = getTiffinPayments();
-  const attendance = getTiffinAttendance();
-  const totalPaid = payments.reduce((sum, p) => sum + p.amount, 0);
-  
-  let daysUsed = 0;
-  Object.values(attendance).forEach(day => {
-    if (day.morning) daysUsed += 0.5;
-    if (day.evening) daysUsed += 0.5;
-  });
-  
-  const totalUsed = daysUsed * TIFFIN_CONFIG.dailyCost;
-  const remaining = Math.max(0, totalPaid - totalUsed);
-  return { totalPaid, totalUsed, remaining, daysUsed };
-}
-
-function renderTiffin() {
-  document.getElementById('tiffin-section').style.display = 'block';
-  document.getElementById('home-section').style.display = 'none';
-  document.getElementById('mocks-section').style.display = 'none';
-  document.getElementById('schedule-section').style.display = 'none';
-  
-  const today = new Date();
-  document.getElementById('tiffin-payment-date').value = today.toISOString().split('T')[0];
-  
-  const stats = getTiffinStats();
-  const payments = getTiffinPayments();
-  const attendance = getTiffinAttendance();
-  const diffTime = Math.abs(TIFFIN_CONFIG.endDate - TIFFIN_CONFIG.startDate);
-  const totalDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-  
-  // Update stats
-  document.getElementById('tiffin-total-paid').textContent = stats.totalPaid;
-  document.getElementById('tiffin-stat-paid').textContent = stats.totalPaid;
-  document.getElementById('tiffin-stat-used').textContent = stats.totalUsed;
-  document.getElementById('tiffin-stat-remaining').textContent = stats.remaining;
-  document.getElementById('tiffin-stat-days').textContent = Math.floor(stats.daysUsed);
-  document.getElementById('tiffin-stat-total-days').textContent = totalDays;
-  
-  // Render payments
-  const paymentsList = document.getElementById('tiffin-payments-list');
-  paymentsList.innerHTML = payments.map((p, i) => `
-    <div class="tiffin-payment-item">
-      <span class="tiffin-payment-date">${p.date}</span>
-      <span class="tiffin-payment-amount">₹${p.amount}</span>
-      <button class="tiffin-payment-remove" onclick="removeTiffinPayment(${i})">Remove</button>
-    </div>
-  `).join('');
-  
-  // Render calendar
-  let calHTML = '';
-  const dayHeaders = ['SU', 'MO', 'TU', 'WE', 'TH', 'FR', 'SA'];
-  dayHeaders.forEach(d => calHTML += `<div class="tiffin-cal-header">${d}</div>`);
-  
-  const firstDay = new Date(2026, 4, 1).getDay();
-  for (let i = 0; i < firstDay; i++) {
-    calHTML += `<div class="tiffin-cal-day empty"></div>`;
-  }
-  
-  let current = new Date(2026, 4, 1);
-  while (current.getMonth() === 4) {
-    const dateStr = current.toISOString().split('T')[0];
-    const att = attendance[dateStr] || { morning: false, evening: false };
-    
-    let className = 'tiffin-cal-day';
-    let label = current.getDate();
-    
-    if (att.morning && att.evening) {
-      className += ' both';
-      label = 'M+E';
-    } else if (att.morning) {
-      className += ' morning';
-      label = 'M';
-    } else if (att.evening) {
-      className += ' evening';
-      label = 'E';
-    }
-    
-    calHTML += `<div class="${className}" onclick="toggleTiffinMeal('${dateStr}',${att.morning},${att.evening})" title="${dateStr}">${label}</div>`;
-    current.setDate(current.getDate() + 1);
-  }
-  
-  document.getElementById('tiffin-calendar-may').innerHTML = calHTML;
-  
-  // Render monthly summary
-  let monthHTML = '';
-  const months = [
-    { name: 'May 2026', month: 4, year: 2026 },
-    { name: 'June 2026', month: 5, year: 2026 },
-    { name: 'July 2026', month: 6, year: 2026 }
-  ];
-  
-  months.forEach(m => {
-    let morningCount = 0, eveningCount = 0;
-    Object.entries(attendance).forEach(([dateStr, meals]) => {
-      const [y, month, d] = dateStr.split('-').map(Number);
-      if (y === m.year && month - 1 === m.month) {
-        if (meals.morning) morningCount++;
-        if (meals.evening) eveningCount++;
+function findZeroDay(){
+  const totalPaid = state.payments.reduce((s,p)=>s+p.amount,0);
+  let spent = 0;
+  for(const mn of MONTHS){
+    for(let d=mn.startDay; d<=mn.endDay; d++){
+      const k = ds(mn.yr, mn.mo, d);
+      spent += mealCost(state.meals[k]||'none');
+      if(spent >= totalPaid){
+        return {yr:mn.yr, mo:mn.mo, day:d};
       }
-    });
-    
-    const totalDays = morningCount + eveningCount;
-    const cost = totalDays * TIFFIN_CONFIG.mealCost;
-    
-    monthHTML += `
-      <div class="tiffin-month-card">
-        <div class="tiffin-month-name">${m.name}</div>
-        <div class="tiffin-month-stats">
-          <div class="tiffin-month-stat">
-            <div class="tiffin-month-stat-value">${morningCount}</div>
-            <div class="tiffin-month-stat-label">Morning</div>
-          </div>
-          <div class="tiffin-month-stat">
-            <div class="tiffin-month-stat-value">${eveningCount}</div>
-            <div class="tiffin-month-stat-label">Evening</div>
-          </div>
-          <div class="tiffin-month-stat">
-            <div class="tiffin-month-stat-value">₹${cost}</div>
-            <div class="tiffin-month-stat-label">Cost</div>
-          </div>
-        </div>
-      </div>
-    `;
-  });
-  
-  document.getElementById('tiffin-months-grid').innerHTML = monthHTML;
+    }
+  }
+  return null;
 }
+
+function cycle(k){
+  const c=['none','morning','evening','both'];
+  const cur=state.meals[k]||'none';
+  state.meals[k]=c[(c.indexOf(cur)+1)%c.length];
+  save(); renderAll();
+}
+
+function addPay(){
+  const amt=parseFloat(document.getElementById('newAmt').value);
+  const dt=document.getElementById('newDt').value;
+  if(!amt||amt<=0){toast('Enter valid amount');return;}
+  if(!dt){toast('Select a date');return;}
+  state.payments.push({id:Date.now(),date:dt,amount:amt,note:'Payment'});
+  state.payments.sort((a,b)=>a.date.localeCompare(b.date));
+  document.getElementById('newAmt').value='';
+  save(); renderAll(); toast('Payment added ✓');
+}
+
+function delPay(id){
+  state.payments=state.payments.filter(p=>p.id!==id);
+  save(); renderAll(); toast('Removed');
+}
+
+function renderPayments(){
+  const list=document.getElementById('payList');
+  list.innerHTML = state.payments.map(p=>`
+    <li>
+      <div><div>${p.note||'Payment'}</div><div class="pmeta">${fmtLabel(p.date)}</div></div>
+      <div style="display:flex;align-items:center">
+        <span class="pamt">₹${p.amount.toLocaleString('en-IN')}</span>
+        <button class="del" onclick="delPay(${p.id})">✕</button>
+      </div>
+    </li>`).join('');
+}
+
+function renderCalendar(){
+  const area = document.getElementById('calArea');
+  const todayStr = today();
+  const zero = findZeroDay();
+
+  let html='';
+  for(const mn of MONTHS){
+    const {yr,mo,label,startDay,endDay} = mn;
+    let mornings=0, evenings=0;
+    for(let d=startDay;d<=endDay;d++){
+      const k=ds(yr,mo,d);
+      const m=state.meals[k];
+      if(m==='morning'||m==='both') mornings++;
+      if(m==='evening'||m==='both') evenings++;
+    }
+
+    const firstDay = new Date(yr,mo,1).getDay();
+    const daysInMonth = new Date(yr,mo+1,0).getDate();
+    const dayLabels=['Su','Mo','Tu','We','Th','Fr','Sa'];
+    let cells = dayLabels.map(l=>`<div class="dl">${l}</div>`).join('');
+
+    for(let i=0;i<firstDay;i++) cells+=`<div class="dc emp"></div>`;
+
+    for(let d=1;d<=daysInMonth;d++){
+      const k=ds(yr,mo,d);
+      const isZeroDay = zero && zero.yr===yr && zero.mo===mo && zero.day===d;
+      const meal=state.meals[k]||'none';
+      const beforeRange = d < startDay;
+      const afterRange = d > endDay;
+      const isFuture = k > todayStr;
+
+      let cls, icon;
+      if(beforeRange||afterRange){
+        cls='bef'; icon='';
+      } else if(isFuture){
+        cls='fut'; icon='';
+      } else if(isZeroDay){
+        cls='zero';
+        icon = meal==='morning'?'M': meal==='evening'?'E': meal==='both'?'M+E':'✓';
+      } else if(meal==='morning'){
+        cls='mor'; icon='M';
+      } else if(meal==='evening'){
+        cls='eve'; icon='E';
+      } else if(meal==='both'){
+        cls='bot'; icon='M+E';
+      } else {
+        cls='non'; icon='';
+      }
+
+      const clickable = !beforeRange && !afterRange && !isFuture;
+      cells+=`<div class="dc ${cls}" ${clickable?`onclick="cycle('${k}')" title="Tap to toggle"`:''}><div class="dn">${d}</div>${icon?`<div class="mi">${icon}</div>`:''}</div>`;
+    }
+
+    html+=`<div class="card">
+      <div class="mhdr"><span>${label}</span><span class="ms">☀️${mornings} · 🌙${evenings} · ₹${(mornings+evenings)*50}</span></div>
+      <div class="dgrid">${cells}</div>
+
+    </div>`;
+  }
+  area.innerHTML=html;
+}
+
+function renderBill(){
+  const totalPaid=state.payments.reduce((s,p)=>s+p.amount,0);
+  let totalDue=0, rows='';
+
+  for(const mn of MONTHS){
+    const {yr,mo,label,startDay,endDay}=mn;
+    let m=0,e=0;
+    for(let d=startDay;d<=endDay;d++){
+      const k=ds(yr,mo,d);
+      const meal=state.meals[k];
+      if(meal==='morning'||meal==='both') m++;
+      if(meal==='evening'||meal==='both') e++;
+    }
+    const amt=(m+e)*RATE;
+    totalDue+=amt;
+    const moStr=`${yr}-${String(mo+1).padStart(2,'0')}`;
+    const paidMo=state.payments.filter(p=>p.date.startsWith(moStr)).reduce((s,p)=>s+p.amount,0);
+    const bal=paidMo-amt;
+    rows+=`<tr>
+      <td>${label}</td><td>${m}</td><td>${e}</td>
+      <td class="bamt">₹${amt.toLocaleString('en-IN')}</td>
+      <td class="bamt bpaid">₹${paidMo.toLocaleString('en-IN')}</td>
+      <td class="bamt ${bal<0?'bdue':'bpaid'}">${bal<0?'-₹'+Math.abs(bal).toLocaleString('en-IN'):'+₹'+bal.toLocaleString('en-IN')}</td>
+    </tr>`;
+  }
+  document.getElementById('billBody').innerHTML=rows;
+
+  const balance=totalPaid-totalDue;
+  document.getElementById('vPaid').textContent='₹'+totalPaid.toLocaleString('en-IN');
+  document.getElementById('vUsed').textContent='₹'+totalDue.toLocaleString('en-IN');
+  const bEl=document.getElementById('vBal');
+  bEl.textContent=(balance<0?'-₹':'+₹')+Math.abs(balance).toLocaleString('en-IN');
+  bEl.className='sv '+(balance<0?'r':'g');
+}
+
+function renderAll(){ renderPayments(); renderCalendar(); renderBill(); }
+
+function toast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg; t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),2200);
+}
+
+document.getElementById('newDt').value=today();
+renderAll();
+  
 </script>
 
 </body>
