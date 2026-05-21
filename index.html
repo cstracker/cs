@@ -247,6 +247,57 @@ canvas#mockGraph{width:100%;height:100%;}
 .sch-modal-close{margin-top:14px;width:100%;padding:10px;background:var(--border2);border:none;color:var(--text);border-radius:8px;font-family:var(--mono);font-size:13px;cursor:pointer;}
 .sch-modal-close:hover{background:var(--border);}
 @media(max-width:700px){.sch-sidebar{display:none;}.sch-layout{flex-direction:column;}}
+
+/* ── TIFFIN TRACKER ── */
+.tiffin-container{padding:20px;max-width:1400px;margin:0 auto;}
+.tiffin-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:30px;flex-wrap:wrap;gap:15px;}
+.tiffin-title{font-size:24px;font-weight:700;color:var(--text);display:flex;gap:10px;align-items:center;text-transform:uppercase;letter-spacing:2px;}
+.tiffin-title-sub{font-size:12px;color:var(--muted);font-weight:400;letter-spacing:0.5px;margin-top:4px;}
+.tiffin-stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:15px;margin-bottom:30px;}
+.tiffin-stat-card{background:var(--surface);border:1.5px solid var(--border);border-radius:12px;padding:20px;text-align:center;transition:all 0.3s ease;}
+.tiffin-stat-card:hover{border-color:var(--border2);box-shadow:0 8px 24px rgba(0,0,0,0.2);}
+.tiffin-stat-value{font-size:32px;font-weight:700;font-family:var(--mono);margin-bottom:8px;color:var(--blue);}
+.tiffin-stat-value.used{color:var(--orange);}
+.tiffin-stat-value.remaining{color:var(--green);}
+.tiffin-stat-label{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;font-weight:600;}
+.tiffin-content{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:30px;}
+.tiffin-section{background:var(--surface);border:1.5px solid var(--border);border-radius:12px;padding:20px;}
+.tiffin-section-title{font-size:14px;color:var(--text);font-weight:700;text-transform:uppercase;letter-spacing:1.5px;margin-bottom:15px;display:flex;gap:8px;align-items:center;}
+.tiffin-payments-list{max-height:250px;overflow-y:auto;margin-bottom:15px;}
+.tiffin-payments-list::-webkit-scrollbar{width:6px;}
+.tiffin-payments-list::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px;}
+.tiffin-payment-item{display:flex;justify-content:space-between;align-items:center;padding:12px;background:rgba(255,255,255,0.05);border-radius:8px;margin-bottom:8px;border:1px solid var(--border);transition:all 0.2s ease;}
+.tiffin-payment-item:hover{background:rgba(255,255,255,0.08);border-color:var(--border2);}
+.tiffin-payment-date{font-size:11px;color:var(--muted);font-family:var(--mono);font-weight:600;}
+.tiffin-payment-amount{font-size:13px;font-weight:700;color:var(--text);min-width:70px;text-align:right;}
+.tiffin-payment-remove{background:rgba(255,87,87,0.2);color:var(--red);border:1px solid rgba(255,87,87,0.4);border-radius:6px;padding:4px 8px;font-size:10px;cursor:pointer;transition:all 0.2s ease;font-weight:600;text-transform:uppercase;}
+.tiffin-payment-remove:hover{background:rgba(255,87,87,0.3);border-color:rgba(255,87,87,0.6);}
+.tiffin-add-form{display:flex;gap:8px;flex-wrap:wrap;}
+.tiffin-add-form input{flex:1;min-width:100px;padding:10px 12px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:var(--mono);font-size:12px;transition:all 0.2s ease;}
+.tiffin-add-form input:focus{outline:none;border-color:var(--accent);}
+.tiffin-add-form input::placeholder{color:var(--muted);}
+.tiffin-add-form button{padding:10px 16px;background:var(--accent);color:var(--text);border:none;border-radius:8px;font-weight:700;cursor:pointer;transition:all 0.2s ease;text-transform:uppercase;font-size:11px;letter-spacing:1px;white-space:nowrap;}
+.tiffin-add-form button:hover{box-shadow:0 4px 12px rgba(6,182,212,0.3);transform:translateY(-2px);}
+.tiffin-calendar{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin-bottom:15px;}
+.tiffin-cal-header{text-align:center;font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;padding:8px 0;letter-spacing:1px;}
+.tiffin-cal-day{aspect-ratio:1;display:flex;align-items:center;justify-content:center;background:var(--surface2);border:1px solid var(--border);border-radius:8px;font-size:11px;cursor:pointer;transition:all 0.2s ease;font-weight:600;}
+.tiffin-cal-day:hover{background:var(--surface);border-color:var(--border2);}
+.tiffin-cal-day.both{background:rgba(74,158,255,0.2);border-color:var(--blue);color:var(--blue);}
+.tiffin-cal-day.morning{background:rgba(74,158,255,0.15);border-color:var(--blue);color:var(--blue);}
+.tiffin-cal-day.evening{background:rgba(255,140,66,0.15);border-color:var(--orange);color:var(--orange);}
+.tiffin-cal-day.empty{background:transparent;border-color:transparent;cursor:default;}
+.tiffin-cal-legend{display:flex;gap:12px;font-size:11px;color:var(--muted);flex-wrap:wrap;margin-top:12px;}
+.tiffin-cal-legend-item{display:flex;gap:6px;align-items:center;}
+.tiffin-cal-legend-color{width:12px;height:12px;border-radius:4px;}
+.tiffin-months-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:15px;}
+.tiffin-month-card{background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:15px;}
+.tiffin-month-name{font-size:13px;font-weight:700;color:var(--text);margin-bottom:10px;text-transform:uppercase;letter-spacing:1px;}
+.tiffin-month-stats{display:flex;justify-content:space-around;font-size:11px;}
+.tiffin-month-stat{text-align:center;}
+.tiffin-month-stat-value{font-size:16px;font-weight:700;color:var(--accent);margin-bottom:4px;font-family:var(--mono);}
+.tiffin-month-stat-label{color:var(--muted);font-size:9px;text-transform:uppercase;}
+@media(max-width:1200px){.tiffin-content{grid-template-columns:1fr;}}
+@media(max-width:700px){.tiffin-stats-grid{grid-template-columns:1fr;}}
 </style>
 </head>
 <body>
@@ -511,6 +562,8 @@ function renderSidebar(){
   h+=ni('home','◈ Dashboard',view==='home');
   h+=ni('mocks','◎ Mock Tests',view==='mocks');
   h+=ni('schedule','◑ Schedule',view==='schedule');
+  h+=`<div class="nav-sep"></div><div class="nav-label">Extra</div>`;
+  h+=ni('tiffin','🍱 Tiffin Tracker',view==='tiffin');
   h+=`<div class="nav-sep"></div><div class="nav-label">Subjects</div>`;
   for(let s in SUBJECTS)h+=ni(s,s,view===s,sOverall(s));
   document.getElementById('sidebar').innerHTML=h;
@@ -521,7 +574,7 @@ function ni(id,label,active,pct){
     :`<div style="width:10px;flex-shrink:0"></div>`;
   return `<div class="nav-item${active?' active':''}" onclick="navigate('${id}')">${ring}<span style="overflow:hidden;text-overflow:ellipsis">${label}</span></div>`;
 }
-function navigate(v){view=v;renderSidebar();v==='home'?renderHome():v==='mocks'?renderMocks():v==='schedule'?renderSchedule():renderSubject(v);}
+function navigate(v){view=v;renderSidebar();v==='home'?renderHome():v==='mocks'?renderMocks():v==='schedule'?renderSchedule():v==='tiffin'?renderTiffin():renderSubject(v);}
 
 // ── HOME ──
 function renderHome(){
@@ -907,5 +960,286 @@ document.addEventListener('click',e=>{if(e.target.id==='schModal')closeSchModal(
     <button class="sch-modal-close" onclick="closeSchModal()">Close</button>
   </div>
 </div>
+
+<!-- TIFFIN TRACKER SECTION -->
+<div id="tiffin-section" style="display:none;">
+  <div class="tiffin-container">
+    <div class="tiffin-header">
+      <div>
+        <div class="tiffin-title">🍱 Tiffin Tracker</div>
+        <div class="tiffin-title-sub">From 8 May 2026 · ₹50 Morning + ₹50 Evening · Paid ₹<span id="tiffin-total-paid">2000</span></div>
+      </div>
+    </div>
+
+    <div class="tiffin-stats-grid">
+      <div class="tiffin-stat-card">
+        <div class="tiffin-stat-value">₹<span id="tiffin-stat-paid">2000</span></div>
+        <div class="tiffin-stat-label">Total Paid</div>
+      </div>
+      <div class="tiffin-stat-card">
+        <div class="tiffin-stat-value used">₹<span id="tiffin-stat-used">0</span></div>
+        <div class="tiffin-stat-label">Total Used</div>
+      </div>
+      <div class="tiffin-stat-card">
+        <div class="tiffin-stat-value remaining">+₹<span id="tiffin-stat-remaining">2000</span></div>
+        <div class="tiffin-stat-label">Remaining</div>
+      </div>
+      <div class="tiffin-stat-card">
+        <div class="tiffin-stat-value"><span id="tiffin-stat-days">0</span>/<span id="tiffin-stat-total-days">70</span></div>
+        <div class="tiffin-stat-label">Days Used</div>
+      </div>
+    </div>
+
+    <div class="tiffin-content">
+      <div class="tiffin-section">
+        <div class="tiffin-section-title">💳 Payments</div>
+        <div class="tiffin-payments-list" id="tiffin-payments-list">
+          <div class="tiffin-payment-item">
+            <span class="tiffin-payment-date">2026-05-08</span>
+            <span class="tiffin-payment-amount">₹2000</span>
+            <button class="tiffin-payment-remove" onclick="removeTiffinPayment(0)">Remove</button>
+          </div>
+        </div>
+        <div class="tiffin-add-form">
+          <input type="number" id="tiffin-payment-amount" placeholder="₹ Amount" min="0">
+          <input type="date" id="tiffin-payment-date">
+          <button onclick="addTiffinPayment()">+ Add</button>
+        </div>
+      </div>
+
+      <div class="tiffin-section">
+        <div class="tiffin-section-title">📅 May 2026</div>
+        <div class="tiffin-calendar" id="tiffin-calendar-may"></div>
+        <div class="tiffin-cal-legend">
+          <div class="tiffin-cal-legend-item">
+            <div class="tiffin-cal-legend-color" style="background:rgba(74,158,255,0.5)"></div>
+            <span>Morning</span>
+          </div>
+          <div class="tiffin-cal-legend-item">
+            <div class="tiffin-cal-legend-color" style="background:rgba(255,140,66,0.5)"></div>
+            <span>Evening</span>
+          </div>
+          <div class="tiffin-cal-legend-item">
+            <div class="tiffin-cal-legend-color" style="background:rgba(74,158,255,0.5);border:1px solid rgba(74,158,255,0.8)"></div>
+            <span>Both</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="tiffin-section" style="margin-bottom:0;">
+      <div class="tiffin-section-title">📊 Monthly Summary</div>
+      <div class="tiffin-months-grid" id="tiffin-months-grid"></div>
+</div>
+</div>
+
+<script>
+// ════════════════════════════════════════════════════════════════════════════
+// TIFFIN TRACKER MODULE
+// ════════════════════════════════════════════════════════════════════════════
+
+const TIFFIN_CONFIG = {
+  startDate: new Date(2026, 4, 8),
+  endDate: new Date(2026, 6, 15),
+  dailyCost: 100,
+  mealCost: 50
+};
+
+function getTiffinPayments() {
+  return JSON.parse(localStorage.getItem('tiffinPayments')) || [
+    { date: '2026-05-08', amount: 2000 }
+  ];
+}
+
+function getTiffinAttendance() {
+  return JSON.parse(localStorage.getItem('tiffinAttendance')) || {};
+}
+
+function saveTiffinPayments(payments) {
+  localStorage.setItem('tiffinPayments', JSON.stringify(payments));
+  renderTiffin();
+}
+
+function saveTiffinAttendance(attendance) {
+  localStorage.setItem('tiffinAttendance', JSON.stringify(attendance));
+  renderTiffin();
+}
+
+function addTiffinPayment() {
+  const amount = document.getElementById('tiffin-payment-amount').value;
+  const date = document.getElementById('tiffin-payment-date').value;
+  
+  if (!amount || !date) {
+    showToast('⚠ Fill amount and date', 'warn');
+    return;
+  }
+  
+  const payments = getTiffinPayments();
+  payments.push({ date, amount: parseInt(amount) });
+  saveTiffinPayments(payments);
+  document.getElementById('tiffin-payment-amount').value = '';
+  showToast('✓ Payment added: ₹' + amount, 'ok');
+}
+
+function removeTiffinPayment(index) {
+  if (confirm('Remove this payment?')) {
+    const payments = getTiffinPayments();
+    payments.splice(index, 1);
+    saveTiffinPayments(payments);
+    showToast('✓ Payment removed', 'ok');
+  }
+}
+
+function toggleTiffinMeal(dateStr, currentMorning, currentEvening) {
+  const attendance = getTiffinAttendance();
+  
+  if (!attendance[dateStr]) {
+    attendance[dateStr] = { morning: false, evening: false };
+  }
+  
+  // Cycle: nothing → morning → evening → both → nothing
+  if (!currentMorning && !currentEvening) {
+    attendance[dateStr] = { morning: true, evening: false };
+  } else if (currentMorning && !currentEvening) {
+    attendance[dateStr] = { morning: false, evening: true };
+  } else if (!currentMorning && currentEvening) {
+    attendance[dateStr] = { morning: true, evening: true };
+  } else {
+    attendance[dateStr] = { morning: false, evening: false };
+  }
+  
+  saveTiffinAttendance(attendance);
+}
+
+function getTiffinStats() {
+  const payments = getTiffinPayments();
+  const attendance = getTiffinAttendance();
+  const totalPaid = payments.reduce((sum, p) => sum + p.amount, 0);
+  
+  let daysUsed = 0;
+  Object.values(attendance).forEach(day => {
+    if (day.morning) daysUsed += 0.5;
+    if (day.evening) daysUsed += 0.5;
+  });
+  
+  const totalUsed = daysUsed * TIFFIN_CONFIG.dailyCost;
+  const remaining = Math.max(0, totalPaid - totalUsed);
+  return { totalPaid, totalUsed, remaining, daysUsed };
+}
+
+function renderTiffin() {
+  document.getElementById('tiffin-section').style.display = 'block';
+  document.getElementById('home-section').style.display = 'none';
+  document.getElementById('mocks-section').style.display = 'none';
+  document.getElementById('schedule-section').style.display = 'none';
+  
+  const today = new Date();
+  document.getElementById('tiffin-payment-date').value = today.toISOString().split('T')[0];
+  
+  const stats = getTiffinStats();
+  const payments = getTiffinPayments();
+  const attendance = getTiffinAttendance();
+  const diffTime = Math.abs(TIFFIN_CONFIG.endDate - TIFFIN_CONFIG.startDate);
+  const totalDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+  
+  // Update stats
+  document.getElementById('tiffin-total-paid').textContent = stats.totalPaid;
+  document.getElementById('tiffin-stat-paid').textContent = stats.totalPaid;
+  document.getElementById('tiffin-stat-used').textContent = stats.totalUsed;
+  document.getElementById('tiffin-stat-remaining').textContent = stats.remaining;
+  document.getElementById('tiffin-stat-days').textContent = Math.floor(stats.daysUsed);
+  document.getElementById('tiffin-stat-total-days').textContent = totalDays;
+  
+  // Render payments
+  const paymentsList = document.getElementById('tiffin-payments-list');
+  paymentsList.innerHTML = payments.map((p, i) => `
+    <div class="tiffin-payment-item">
+      <span class="tiffin-payment-date">${p.date}</span>
+      <span class="tiffin-payment-amount">₹${p.amount}</span>
+      <button class="tiffin-payment-remove" onclick="removeTiffinPayment(${i})">Remove</button>
+    </div>
+  `).join('');
+  
+  // Render calendar
+  let calHTML = '';
+  const dayHeaders = ['SU', 'MO', 'TU', 'WE', 'TH', 'FR', 'SA'];
+  dayHeaders.forEach(d => calHTML += `<div class="tiffin-cal-header">${d}</div>`);
+  
+  const firstDay = new Date(2026, 4, 1).getDay();
+  for (let i = 0; i < firstDay; i++) {
+    calHTML += `<div class="tiffin-cal-day empty"></div>`;
+  }
+  
+  let current = new Date(2026, 4, 1);
+  while (current.getMonth() === 4) {
+    const dateStr = current.toISOString().split('T')[0];
+    const att = attendance[dateStr] || { morning: false, evening: false };
+    
+    let className = 'tiffin-cal-day';
+    let label = current.getDate();
+    
+    if (att.morning && att.evening) {
+      className += ' both';
+      label = 'M+E';
+    } else if (att.morning) {
+      className += ' morning';
+      label = 'M';
+    } else if (att.evening) {
+      className += ' evening';
+      label = 'E';
+    }
+    
+    calHTML += `<div class="${className}" onclick="toggleTiffinMeal('${dateStr}',${att.morning},${att.evening})" title="${dateStr}">${label}</div>`;
+    current.setDate(current.getDate() + 1);
+  }
+  
+  document.getElementById('tiffin-calendar-may').innerHTML = calHTML;
+  
+  // Render monthly summary
+  let monthHTML = '';
+  const months = [
+    { name: 'May 2026', month: 4, year: 2026 },
+    { name: 'June 2026', month: 5, year: 2026 },
+    { name: 'July 2026', month: 6, year: 2026 }
+  ];
+  
+  months.forEach(m => {
+    let morningCount = 0, eveningCount = 0;
+    Object.entries(attendance).forEach(([dateStr, meals]) => {
+      const [y, month, d] = dateStr.split('-').map(Number);
+      if (y === m.year && month - 1 === m.month) {
+        if (meals.morning) morningCount++;
+        if (meals.evening) eveningCount++;
+      }
+    });
+    
+    const totalDays = morningCount + eveningCount;
+    const cost = totalDays * TIFFIN_CONFIG.mealCost;
+    
+    monthHTML += `
+      <div class="tiffin-month-card">
+        <div class="tiffin-month-name">${m.name}</div>
+        <div class="tiffin-month-stats">
+          <div class="tiffin-month-stat">
+            <div class="tiffin-month-stat-value">${morningCount}</div>
+            <div class="tiffin-month-stat-label">Morning</div>
+          </div>
+          <div class="tiffin-month-stat">
+            <div class="tiffin-month-stat-value">${eveningCount}</div>
+            <div class="tiffin-month-stat-label">Evening</div>
+          </div>
+          <div class="tiffin-month-stat">
+            <div class="tiffin-month-stat-value">₹${cost}</div>
+            <div class="tiffin-month-stat-label">Cost</div>
+          </div>
+        </div>
+      </div>
+    `;
+  });
+  
+  document.getElementById('tiffin-months-grid').innerHTML = monthHTML;
+}
+</script>
+
 </body>
 </html>
