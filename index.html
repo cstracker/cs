@@ -1575,12 +1575,35 @@ const SUBJ_TOPICS = {
 };
 const TOPIC_ACTIONS = ['Study','PYQ','Practice'];
 
-function tKey(subj,ti,ai){ return 'tp_'+subj.replace(/\s+/g,'_')+'_'+ti+'_'+ai; }
-function tGet(k){ try{return JSON.parse(localStorage.getItem(k));}catch(e){return null;} }
-function tSet(k,v){ try{localStorage.setItem(k,JSON.stringify(v));}catch(e){} }
+// ── TOPIC STORAGE (Supabase: gate_topics table) ──
+// In-memory cache: { 'subj|ti|ai': true/false }
+let _topicCache = null;
+let _topicSaveTimer = null;
+
+async function loadTopicCache(){
+  if(!sb||!currentUser){ _topicCache={}; return; }
+  try{
+    const{data,error}=await sb.from('gate_topics').select('subj,ti,ai,done').eq('user_id',currentUser.id);
+    _topicCache={};
+    if(!error&&data) data.forEach(r=>{ _topicCache[r.subj+'|'+r.ti+'|'+r.ai]=!!r.done; });
+  }catch(e){ _topicCache={}; }
+}
+function tGet(subj,ti,ai){ return _topicCache ? !!_topicCache[subj+'|'+ti+'|'+ai] : false; }
+function tSet(subj,ti,ai,val){
+  if(!_topicCache)_topicCache={};
+  _topicCache[subj+'|'+ti+'|'+ai]=!!val;
+  clearTimeout(_topicSaveTimer);
+  _topicSaveTimer=setTimeout(()=>_saveTopicRow(subj,ti,ai,!!val),400);
+}
+async function _saveTopicRow(subj,ti,ai,done){
+  if(!sb||!currentUser)return;
+  try{
+    await sb.from('gate_topics').upsert({user_id:currentUser.id,subj,ti,ai,done},{onConflict:'user_id,subj,ti,ai'});
+  }catch(e){}
+}
 function topicPct(subj,ai){
   const ts=SUBJ_TOPICS[subj];if(!ts)return{done:0,total:0,pct:0};
-  let d=0;ts.forEach((_,ti)=>{if(tGet(tKey(subj,ti,ai)))d++;});
+  let d=0;ts.forEach((_,ti)=>{if(tGet(subj,ti,ai))d++;});
   return{done:d,total:ts.length,pct:ts.length?Math.round(d/ts.length*100):0};
 }
 function toggleTopicSection(subj){
@@ -1842,6 +1865,8 @@ async function launchApp(){
 // LOAD ALL
 async function loadAll(){
   const td=todayKey();
+  // 0. Load topic and mock caches from Supabase
+  await Promise.all([loadTopicCache(), loadMockCache()]);
   // 1. Timetable
   try{
     const{data,error}=await sb.from('gate_timetable').select('*').eq('user_id',currentUser.id).order('sort_order');
@@ -3425,8 +3450,38 @@ function mobNav(btn){
 
 // ── MOCKS ──
 const MOCK_COUNT = 60;
-function getMockData(key){ try{return JSON.parse(localStorage.getItem('gate_mock_'+key));}catch(e){return null;} }
-function setMockData(key,val){ try{localStorage.setItem('gate_mock_'+key,JSON.stringify(val));}catch(e){} }
+// ── MOCK STORAGE (Supabase: gate_mocks table) ──
+// In-memory cache: { 'done_1': true, 'mark_1': '72', ... }
+let _mockCache = null;
+async function loadMockCache(){
+  if(!sb||!currentUser){ _mockCache={}; return; }
+  try{
+    const{data,error}=await sb.from('gate_mocks').select('mock_num,done,marks').eq('user_id',currentUser.id);
+    _mockCache={};
+    if(!error&&data) data.forEach(r=>{
+      _mockCache['done_'+r.mock_num]=!!r.done;
+      _mockCache['mark_'+r.mock_num]=r.marks!=null?String(r.marks):'';
+    });
+  }catch(e){ _mockCache={}; }
+}
+function getMockData(key){ return _mockCache ? (_mockCache[key]??null) : null; }
+function setMockData(key,val){
+  if(!_mockCache)_mockCache={};
+  _mockCache[key]=val;
+  // parse mock num from key e.g. 'done_5' or 'mark_12'
+  const m=key.match(/^(done|mark)_(\d+)$/);
+  if(!m)return;
+  const num=parseInt(m[2]);
+  clearTimeout(_mockCache['_t_'+num]);
+  _mockCache['_t_'+num]=setTimeout(async()=>{
+    if(!sb||!currentUser)return;
+    const done=!!_mockCache['done_'+num];
+    const marks=_mockCache['mark_'+num]??null;
+    try{
+      await sb.from('gate_mocks').upsert({user_id:currentUser.id,mock_num:num,done,marks:marks!==''&&marks!=null?parseFloat(marks):null},{onConflict:'user_id,mock_num'});
+    }catch(e){}
+  },500);
+}
 
 function renderMocks(){
   const inner = document.getElementById('mocks-inner');
@@ -3527,7 +3582,7 @@ function buildModalRows(subjName){
   const cont=document.getElementById('modal-topic-rows');
   cont.innerHTML='';
   topics.forEach((topic,ti)=>{
-    const states=TOPIC_ACTIONS.map((_,ai)=>tGet(tKey(subjName,ti,ai))||false);
+    const states=TOPIC_ACTIONS.map((_,ai)=>tGet(subjName,ti,ai));
     const allDone=states.every(Boolean);
     const row=document.createElement('div');
     row.className='topic-row-modal'+(allDone?' t-done-m':'');
@@ -3538,8 +3593,8 @@ function buildModalRows(subjName){
       const cell=document.createElement('div');cell.className='topic-cb-cell-m';
       const cb=document.createElement('input');cb.type='checkbox';cb.className='topic-cb-m '+cls;cb.checked=states[ai];
       cb.onchange=()=>{
-        tSet(tKey(subjName,ti,ai),cb.checked);
-        const ns=TOPIC_ACTIONS.map((_,a)=>tGet(tKey(subjName,ti,a))||false);
+        tSet(subjName,ti,ai,cb.checked);
+        const ns=TOPIC_ACTIONS.map((_,a)=>tGet(subjName,ti,a));
         row.className='topic-row-modal'+(ns.every(Boolean)?' t-done-m':'');
         refreshModalPills(subjName);
       };
