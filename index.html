@@ -731,9 +731,9 @@ body.timer-running-glow .now-card{
 .cal-nav button{background:var(--bg3);border:1px solid var(--border2);color:var(--text2);border-radius:var(--rs);padding:7px 16px;cursor:pointer;font-size:13px;transition:all .15s;font-weight:500}
 .cal-nav button:hover{color:var(--text);border-color:var(--border3)}
 .cal-month-lbl{font-size:16px;font-weight:700;letter-spacing:-0.3px}
-.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:5px}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px}
 .cal-hdr-cell{font-size:10.5px;color:var(--text3);text-align:center;padding:3px 0;font-weight:600;text-transform:uppercase;letter-spacing:.04em}
-.cal-day{aspect-ratio:1;border-radius:var(--rs);display:flex;flex-direction:column;align-items:center;justify-content:center;border:1px solid transparent;cursor:default;transition:transform .15s,box-shadow .15s,background .15s,border-color .15s;position:relative;overflow:hidden}
+.cal-day{width:100%;height:56px;border-radius:var(--rs);display:flex;flex-direction:column;align-items:center;justify-content:center;border:1px solid transparent;cursor:default;transition:transform .15s,box-shadow .15s,background .15s,border-color .15s;position:relative;overflow:hidden;box-sizing:border-box}
 .cal-day .dn{font-size:13px;font-weight:800;color:var(--text);line-height:1.2}
 .cal-day .dh{font-size:10px;font-weight:700;color:var(--text2);margin-top:2px}
 .cal-day.nodata .dn{color:var(--text3)}
@@ -811,6 +811,9 @@ body.timer-running-glow .now-card{
 /* NOTIF FAB */
 .notif-fab{position:fixed;top:1.25rem;right:1.25rem;background:var(--bg2);border:1px solid var(--border2);border-radius:50%;width:40px;height:40px;display:flex;align-items:center;justify-content:center;cursor:pointer;z-index:200;font-size:17px;color:var(--text2);transition:all .15s;box-shadow:0 2px 12px rgba(0,0,0,0.3)}
 .notif-fab:hover{border-color:var(--blue);color:var(--blue);box-shadow:var(--glow-blue)}
+.notif-fab.bell-active{border-color:rgba(91,141,239,0.6);color:var(--blue)}
+.notif-fab.bell-denied{border-color:rgba(232,96,96,0.5);color:var(--red)}
+.notif-badge{position:absolute;top:-4px;right:-4px;background:var(--red);color:#fff;border-radius:99px;font-size:9px;font-weight:800;min-width:16px;height:16px;display:flex;align-items:center;justify-content:center;padding:0 3px;border:2px solid var(--bg);font-family:var(--mono);pointer-events:none}
 
 /* QUICK SESS */
 .quick-item{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--border)}
@@ -1168,7 +1171,7 @@ canvas#mockGraph{width:100%;height:100%;}
 
 <div id="app">
   <!-- These elements only show after login -->
-  <div class="notif-fab" onclick="requestNotif()" title="Enable session reminders">🔔</div>
+  <div class="notif-fab" id="notif-bell" onclick="requestNotif()" title="Enable notifications" style="position:relative">🔔<span class="notif-badge" id="notif-badge" style="display:none">!</span></div>
   <!-- Mobile bottom nav — inside #app so it only shows after login -->
   <nav class="mobile-nav" id="mobile-nav">
     <button class="mob-nav-btn active" onclick="showPage('dashboard',this);mobNav(this)">🏠<span>Home</span></button>
@@ -1188,7 +1191,6 @@ canvas#mockGraph{width:100%;height:100%;}
     <button class="nav-item" onclick="showPage('timetable',this)"><span class="nav-icon">🕐</span>Timetable</button>
     <button class="nav-item" onclick="showPage('subjects',this)"><span class="nav-icon">📚</span>Subjects</button>
     <button class="nav-item" onclick="showPage('calendar',this)"><span class="nav-icon">📅</span>Calendar</button>
-    <button class="nav-item" onclick="showPage('focuslogs',this)"><span class="nav-icon">⏱</span>Focus logs</button>
     <button class="nav-item" onclick="showPage('mocks',this)"><span class="nav-icon">📊</span>Mocks</button>
     <button class="nav-item" onclick="showPage('notes',this)"><span class="nav-icon">📝</span>Notes</button>
     <button class="nav-item" onclick="showPage('settings',this)"><span class="nav-icon">⚙</span>Settings</button>
@@ -1351,7 +1353,7 @@ canvas#mockGraph{width:100%;height:100%;}
         <div class="stat-card sc-amber"><div class="stat-label">Daily average</div><div class="stat-val" style="color:var(--amber)" id="cal-avg">0h</div><div class="stat-sub">active days</div></div>
         <div class="stat-card sc-purple"><div class="stat-label">Active days</div><div class="stat-val" style="color:var(--purple)" id="cal-active">0</div><div class="stat-sub" id="cal-active-of">of 0 days</div></div>
       </div>
-      <div class="card" style="margin-bottom:1.25rem">
+      <div class="card" style="margin-bottom:1.25rem;max-width:560px">
         <div class="cal-nav">
           <button onclick="changeMonth(-1)">← Prev</button>
           <div class="cal-month-lbl" id="cal-label"></div>
@@ -1361,11 +1363,12 @@ canvas#mockGraph{width:100%;height:100%;}
         <div style="height:8px"></div>
         <div class="cal-grid" id="cal-grid"></div>
         <div class="legend">
-          <div class="leg-dot" style="background:rgba(16,140,75,0.42);border:1px solid rgba(40,200,110,0.7)"></div><span>8h+</span>
+          <div class="leg-dot" style="background:rgba(255,200,0,0.55);border:1px solid rgba(255,200,0,0.8)"></div><span>12h+</span>
+          <div class="leg-dot" style="background:rgba(0,200,180,0.45);border:1px solid rgba(0,220,200,0.75)"></div><span>10–12h</span>
+          <div class="leg-dot" style="background:rgba(16,140,75,0.42);border:1px solid rgba(40,200,110,0.7)"></div><span>8–10h</span>
           <div class="leg-dot" style="background:rgba(30,70,200,0.42);border:1px solid rgba(80,140,255,0.65)"></div><span>4–8h</span>
-          <div class="leg-dot" style="background:rgba(160,80,0,0.44);border:1px solid rgba(240,140,30,0.65)"></div><span>1–4h</span>
+          <div class="leg-dot" style="background:rgba(160,80,0,0.38);border:1px solid rgba(240,140,30,0.6)"></div><span>1–4h</span>
           <div class="leg-dot" style="background:var(--bg3)"></div><span>No study</span>
-          <span style="margin-left:auto;font-size:11px">Click a day for details</span>
         </div>
       </div>
       <div class="card" id="day-detail-panel" style="display:none;border-color:rgba(91,141,239,0.3);margin-bottom:1.25rem">
@@ -1856,6 +1859,7 @@ async function launchApp(){
   document.getElementById('notes-date').textContent=todayLabel();
   await loadAll();
   renderAll();
+  updateBellState();
   restoreRunningTimer();
   startClockTick();
   startTTLiveTick();
@@ -3003,15 +3007,14 @@ function renderCalendar(){
   let cells=Array(first).fill('').map(()=>`<div></div>`);
   const td=todayKey();
   let monthTotal=0,bestDay=0,bestDate='',activeDays=0;
-  // Hour-based color handled purely by CSS class — no inline style needed
-  function dhColor(h){ return ''; }
-  // Intensity within range — makes higher hours look darker/richer as background opacity
-  function dayBgIntensity(h,secs){
-    // within each band, scale opacity from base to max
-    if(h>=8){const extra=Math.min((h-8)/4,1);return 0.38+extra*0.22;}  // 8h=0.38 → 12h=0.60
-    if(h>=4){const extra=Math.min((h-4)/4,1);return 0.22+extra*0.16;}  // 4h=0.22 → 8h=0.38
-    if(h>=1){const extra=Math.min((h-1)/3,1);return 0.14+extra*0.16;}  // 1h=0.14 → 4h=0.30
-    return 0;
+  // 5-tier color bands: 1-4h amber, 4-8h blue, 8-10h green, 10-12h teal, 12+ gold
+  function dayBgStyle(h){
+    if(h<=0) return '';
+    if(h>=12) return 'background:rgba(255,200,0,0.55);border-color:rgba(255,200,0,0.8)';
+    if(h>=10) return 'background:rgba(0,200,180,0.45);border-color:rgba(0,220,200,0.75)';
+    if(h>=8)  return 'background:rgba(16,140,75,0.42);border-color:rgba(40,200,110,0.7)';
+    if(h>=4)  return 'background:rgba(30,70,200,0.42);border-color:rgba(80,140,255,0.65)';
+    return 'background:rgba(160,80,0,0.38);border-color:rgba(240,140,30,0.6)';
   }
   for(let d=1;d<=last;d++){
     const key=monthKey(d);
@@ -3023,18 +3026,9 @@ function renderCalendar(){
     const isToday=key===td;
     // Show Xh Ym (e.g. "7h 23m"), just "Xh" if 0 mins, "-" if no data
     const hLabel=secs>0?(Math.floor(h)+'h'+(mins>0?' '+mins+'m':'')):'–';
-    // Inline style for dh color
-    const colorStyle=secs>0?` style="${dhColor(h)}"`:'';
-    // Inline intensity override for bg — makes higher hours visually darker in band
-    const intensity=dayBgIntensity(h,secs);
-    let bgStyle='';
-    if(intensity>0 && !isToday){
-      if(h>=8) bgStyle=`style="background:rgba(16,140,75,${intensity.toFixed(2)})"`;
-      else if(h>=4) bgStyle=`style="background:rgba(30,70,200,${intensity.toFixed(2)})"`;
-      else bgStyle=`style="background:rgba(160,80,0,${intensity.toFixed(2)})"`;
-    }
-    cells.push(`<div class="cal-day ${cls}${isToday?' today':''}" ${bgStyle} onclick="showDayDetail('${key}')" title="${key}: ${fmtSecs(secs)}">
-      <div class="dn">${d}</div><div class="dh"${colorStyle}>${hLabel}</div>
+    const bgInlineStyle=(!isToday&&secs>0)?` style="${dayBgStyle(h)}"`:'';
+    cells.push(`<div class="cal-day${isToday?' today':''}" ${bgInlineStyle} onclick="showDayDetail('${key}')" title="${key}: ${fmtSecs(secs)}">
+      <div class="dn">${d}</div><div class="dh">${hLabel}</div>
     </div>`);
   }
   document.getElementById('cal-grid').innerHTML=cells.join('');
@@ -3214,16 +3208,28 @@ let _alertVisible = false;
 function requestNotif(){
   if(!('Notification' in window)){showBanner('⚠️','Not supported','This browser does not support notifications.','type-break');return;}
   if(Notification.permission==='granted'){
-    showBanner('🔔','Notifications active','All timetable alerts are running. You will see banners here + system notifications.','type-session');
-    return;
+    showBanner('🔔','Notifications active','All timetable alerts are running.','type-session');
+    updateBellState(); return;
   }
   Notification.requestPermission().then(p=>{
-    if(p==='granted'){
-      showBanner('🎉','Notifications enabled!','You will get alerts here and as system notifications for every session.','type-done');
-    } else {
-      showBanner('⚠️','Permission denied','Allow notifications in your browser settings, then click 🔔 again.','type-break');
-    }
+    if(p==='granted'){showBanner('🎉','Notifications enabled!','You will get alerts for every session.','type-done');}
+    else{showBanner('⚠️','Permission denied','Allow notifications in browser settings, then click 🔔 again.','type-break');}
+    updateBellState();
   });
+}
+function updateBellState(){
+  const bell=document.getElementById('notif-bell');
+  const badge=document.getElementById('notif-badge');
+  if(!bell||!badge)return;
+  bell.classList.remove('bell-active','bell-denied');
+  if(!('Notification' in window)){bell.style.display='flex';badge.style.display='flex';badge.textContent='!';return;}
+  if(Notification.permission==='granted'){
+    // Permission granted — hide the bell entirely
+    bell.style.display='none'; return;
+  }
+  bell.style.display='flex';
+  if(Notification.permission==='denied'){bell.classList.add('bell-denied');badge.style.display='flex';badge.textContent='✕';}
+  else{badge.style.display='flex';badge.textContent='?';}
 }
 
 // Show a prominent in-app banner (works whether or not OS notifs are allowed)
@@ -3604,7 +3610,8 @@ function buildModalRows(subjName){
   });
 }
 
-function showPage(name,btn){
+function showPage(name,btn,skipHistory){
+  if(!skipHistory) history.pushState({page:name},'',location.pathname+'#'+name);
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(b=>b.classList.remove('active'));
   document.getElementById('page-'+name).classList.add('active');
@@ -3632,6 +3639,21 @@ document.addEventListener('keydown',e=>{
     else if(document.getElementById('form-login')?.style.display!=='none')doLogin();
     else if(document.getElementById('name-edit-wrap')?.style.display!=='none'&&document.activeElement?.id==='edit-name-inp')saveName();
   }
+});
+
+// ── Handle browser back/forward button ──
+window.addEventListener('popstate', e=>{
+  const page=(e.state&&e.state.page)||'dashboard';
+  showPage(page, null, true);
+  // sync nav highlights
+  document.querySelectorAll('.nav-item,.mob-nav-btn').forEach(b=>{
+    const match=b.getAttribute('onclick')||'';
+    b.classList.toggle('active', match.includes("'"+page+"'"));
+  });
+});
+// Set initial history state
+window.addEventListener('load',()=>{
+  if(!history.state) history.replaceState({page:'dashboard'},'',location.pathname+'#dashboard');
 });
 </script>
 
