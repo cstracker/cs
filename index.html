@@ -570,6 +570,8 @@ body.timer-running-glow .now-card{
 /* Columns */
 .tt-time-col{display:flex;flex-direction:column;gap:2px;min-width:0}
 .tt-time-main{font-size:11.5px;color:var(--text3);font-weight:500;line-height:1.3;word-break:break-word}
+.tt-time-inp{font-size:11px;color:var(--text3);font-weight:500;background:transparent;border:none;outline:none;font-family:inherit;padding:2px 4px;border-radius:4px;transition:background .15s;width:110px;min-width:0}
+.tt-time-inp:hover,.tt-time-inp:focus{background:rgba(255,255,255,0.06);color:var(--text);border-bottom:1px dashed var(--border2)}
 .tt-time-dur{font-size:10px;color:var(--text3);background:var(--bg3);border-radius:3px;padding:1px 5px;display:inline-block;margin-top:2px;opacity:.7}
 .tt-activity-col{min-width:0;display:flex;flex-direction:column;gap:0}
 .tt-activity-top{display:flex;align-items:center;gap:6px;flex-wrap:wrap;min-width:0}
@@ -1242,6 +1244,31 @@ canvas#mockGraph{width:100%;height:100%;}
         </div>
       </div>
 
+      <!-- GATE 2027 Countdown -->
+      <div id="gate-countdown-bar" style="margin-bottom:1.25rem;background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:12px 18px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
+        <div style="display:flex;align-items:center;gap:10px">
+          <span style="font-size:18px">🎯</span>
+          <div>
+            <div style="font-size:11px;color:var(--text3);font-weight:600;text-transform:uppercase;letter-spacing:.08em">GATE CSE 2027</div>
+            <div style="font-size:12px;color:var(--text2);margin-top:1px">1 Feb 2027 · Stay consistent!</div>
+          </div>
+        </div>
+        <div style="display:flex;gap:16px;align-items:center">
+          <div style="text-align:center">
+            <div id="cd-days" style="font-family:var(--mono);font-size:28px;font-weight:800;color:var(--amber);line-height:1">—</div>
+            <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.08em;margin-top:2px">days left</div>
+          </div>
+          <div style="text-align:center">
+            <div id="cd-weeks" style="font-family:var(--mono);font-size:18px;font-weight:700;color:var(--text2);line-height:1">—</div>
+            <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.08em;margin-top:2px">weeks</div>
+          </div>
+          <div style="text-align:center">
+            <div id="cd-pct" style="font-family:var(--mono);font-size:18px;font-weight:700;color:var(--green);line-height:1">—</div>
+            <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.08em;margin-top:2px">prep done</div>
+          </div>
+        </div>
+      </div>
+
       <!-- Daily goal ring + timer -->
       <div class="focus-block" id="focus-block">
         <div class="focus-top">
@@ -1606,6 +1633,7 @@ async function _saveTopicRow(subj,ti,ai,done){
 }
 function topicPct(subj,ai){
   const ts=SUBJ_TOPICS[subj];if(!ts)return{done:0,total:0,pct:0};
+  if(!_topicCache)return{done:0,total:ts.length,pct:0}; // cache not loaded yet
   let d=0;ts.forEach((_,ti)=>{if(tGet(subj,ti,ai))d++;});
   return{done:d,total:ts.length,pct:ts.length?Math.round(d/ts.length*100):0};
 }
@@ -1810,8 +1838,19 @@ window.addEventListener('DOMContentLoaded',async()=>{
     if(session){currentUser=session.user;await launchApp();}
     else{document.getElementById('auth-screen').style.display='flex';}
     sb.auth.onAuthStateChange(async(event,session)=>{
-      if(event==='SIGNED_IN'&&session){currentUser=session.user;document.getElementById('auth-screen').style.display='none';await launchApp();}
-      if(event==='SIGNED_OUT'){currentUser=null;document.getElementById('app').style.display='none';document.getElementById('auth-screen').style.display='flex';}
+      if((event==='SIGNED_IN'||event==='TOKEN_REFRESHED'||event==='INITIAL_SESSION')&&session){
+        currentUser=session.user;
+        document.getElementById('auth-screen').style.display='none';
+        if(event==='SIGNED_IN') await launchApp(); // only full load on sign-in
+        return;
+      }
+      if(event==='SIGNED_OUT'){
+        // Only show sign-in if this was a real sign-out (user pressed button or no session)
+        if(!currentUser) return; // already signed out, ignore
+        currentUser=null;
+        document.getElementById('app').style.display='none';
+        document.getElementById('auth-screen').style.display='flex';
+      }
     });
   }catch(e){
     document.getElementById('loading').style.display='none';
@@ -1846,6 +1885,14 @@ async function doSignup(){
   else authOk('Account created! Check email to confirm, then sign in.');
 }
 async function doLogout(){_timerRunning=false;cancelAnimationFrame(_timerRAF);await sb.auth.signOut();}
+
+// Keep Supabase session alive — refresh token every 10 minutes to prevent auto sign-out
+setInterval(async()=>{
+  try{
+    const{data}=await sb.auth.getSession();
+    if(data&&data.session&&data.session.user) currentUser=data.session.user;
+  }catch(e){}
+},10*60*1000);
 
 // LAUNCH
 async function launchApp(){
@@ -2027,7 +2074,7 @@ async function logFocusStop(logId,timerSecs){
 }
 
 // RENDER ALL
-function renderAll(){renderStats();renderTT();renderSubjects();renderCalendar();renderPastNotes();document.getElementById('notes-ta').value=ST.notes[todayKey()]||'';refreshDashboard();}
+function renderAll(){renderStats();renderTT();renderSubjects();renderCalendar();renderPastNotes();document.getElementById('notes-ta').value=ST.notes[todayKey()]||'';refreshDashboard();updateCountdown();}
 
 function renderStats(){
   const done=ST.sessions.filter(Boolean).length;
@@ -2038,7 +2085,7 @@ function renderStats(){
   const h=Math.floor(display/3600),m=Math.floor((display%3600)/60);
   setText('s-focus',h+'h '+m+'m');
   setText('s-streak',ST.streak);
-  setText('s-subj',ST.subjectPct.filter(p=>p===100).length+'/'+SUBJ_DEFAULTS.length);
+  setText('s-subj',SUBJ_DEFAULTS.filter(s=>topicPct(s.name,0).pct===100).length+'/'+SUBJ_DEFAULTS.length);
   setText('today-total',h+'h '+m+'m');
   updateDashRing(display);
   updateGoalGlow(display);
@@ -2399,7 +2446,7 @@ function renderTT(){
       ${progressBar}
       <div class="tt-row-inner">
         <div class="tt-time-col">
-          <div class="tt-time-main">${r.time}</div>
+          <input class="tt-time-inp" data-idx="${i}" data-field="time" value="${r.time||''}" placeholder="e.g. 7:00-9:00" oninput="onTTInput(this)" title="Edit time"/>
           ${durStr?`<div class="tt-time-dur">${durStr}</div>`:''}
         </div>
         <div class="tt-activity-col">
@@ -2469,25 +2516,32 @@ function resetToDefaultTT(){
 // SUBJECTS
 function renderSubjects(){
   document.getElementById('subj-grid').innerHTML=SUBJ_DEFAULTS.map((s,i)=>{
-    const pct=ST.subjectPct[i]||0,st=ST.subjectStatus[i]||s.status;
     const bm={restudy:'b-restudy',pending:'b-pending',active:'b-active',done:'b-done'};
     const lm={restudy:'re-study',pending:'pending',active:'active',done:'done'};
-    const pctBtns=[0,25,50,75,100].map(p=>`<button class="pct-btn${pct===p?' sel':''}" onclick="setPct(${i},${p})">${p}%</button>`).join('');
+    // % derived from Study topics (ai=0) completed
+    const tp0=topicPct(s.name,0);
+    const topicDerivedPct=tp0.pct;
+    // Auto-update ST if topic-derived % differs
+    if(ST.subjectPct[i]!==topicDerivedPct){ST.subjectPct[i]=topicDerivedPct;}
     const pyqC=ST.subjectPyq[i]||0;
     const testDone=ST.subjectTestDone[i]||false;
     const dots=Array.from({length:Math.max(pyqC,5)},(_,d)=>`<div class="pyq-dot${d<pyqC?' done':''}"></div>`).join('');
     const topics=SUBJ_TOPICS[s.name]||[];
-    const tp0=topicPct(s.name,0),tp1=topicPct(s.name,1),tp2=topicPct(s.name,2);
+    const tp1=topicPct(s.name,1),tp2=topicPct(s.name,2);
     const topicsBtn=topics.length?`<button class="topics-toggle-btn" onclick="openTopicsModal('${s.name.replace(/'/g,"\\'")}')">📋 Topics (${topics.length}) &nbsp;·&nbsp; <span style="color:var(--blue)">${tp0.pct}%</span> <span style="color:var(--amber)">${tp1.pct}%</span> <span style="color:var(--green)">${tp2.pct}%</span></button>`:'';
+    // derive status from topic progress
+    const _st=topicDerivedPct===100?'done':topicDerivedPct>0?'active':(SUBJ_DEFAULTS[i].status==='restudy'?'restudy':'pending');
     return `<div class="subj-card" style="--sc:${s.color}">
-      <div style="position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,${s.color},transparent);border-radius:var(--r) var(--r) 0 0;opacity:${pct>0?1:0.3}"></div>
+      <div style="position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,${s.color},transparent);border-radius:var(--r) var(--r) 0 0;opacity:${topicDerivedPct>0?1:0.3}"></div>
       <div class="subj-top">
         <div class="subj-name subj-name-clickable" onclick="openTopicsModal('${s.name.replace(/'/g,"\\'")}') " title="Tap to view topics">${s.name} <span style="font-size:10px;color:var(--text3);font-weight:400">↗</span></div>
-        <div class="subj-badge ${bm[st]||'b-pending'}">${lm[st]||st}</div>
+        <div class="subj-badge ${bm[_st]||'b-pending'}">${lm[_st]||_st}</div>
       </div>
-      <div class="subj-bar-bg"><div class="subj-bar-fill" style="width:${pct}%;background:linear-gradient(90deg,${s.color},${s.color}99)"></div></div>
-      <div class="subj-pct-label">${pct}% complete</div>
-      <div class="pct-btns">${pctBtns}</div>
+      <div class="subj-bar-bg"><div class="subj-bar-fill" style="width:${topicDerivedPct}%;background:linear-gradient(90deg,${s.color},${s.color}99)"></div></div>
+      <div class="subj-pct-label" style="display:flex;align-items:center;gap:8px">
+        <span>${topicDerivedPct}% complete</span>
+        <span style="font-size:10px;color:var(--text3)">(${tp0.done}/${tp0.total} topics studied)</span>
+      </div>
       <div class="subj-divider"></div>
       <div class="subj-tracking">
         <div class="track-row">
@@ -2836,6 +2890,33 @@ function refreshDashboard(){
   const live=ST.totalFocusSecs+(_timerRunning?_timerElapsed():0);
   updateDashRing(live);
   updateGoalGlow(live);
+  updateCountdown();
+}
+function updateCountdown(){
+  const exam=new Date('2027-02-01T00:00:00');
+  const prepStart=new Date('2025-06-01T00:00:00'); // approx prep start
+  const now=new Date();
+  const msLeft=exam-now;
+  if(msLeft<0){
+    const cd=document.getElementById('cd-days');
+    if(cd)cd.parentElement.parentElement.innerHTML='<div style="color:var(--green);font-weight:700;font-size:16px">🎉 GATE 2027 Exam Day!</div>';
+    return;
+  }
+  const daysLeft=Math.ceil(msLeft/(1000*60*60*24));
+  const weeksLeft=Math.floor(daysLeft/7);
+  const totalPrep=Math.max(1,Math.ceil((exam-prepStart)/(1000*60*60*24)));
+  const elapsed=Math.max(0,Math.ceil((now-prepStart)/(1000*60*60*24)));
+  const prepPct=Math.min(100,Math.round(elapsed/totalPrep*100));
+  const cd=document.getElementById('cd-days');
+  const cw=document.getElementById('cd-weeks');
+  const cp=document.getElementById('cd-pct');
+  if(cd)cd.textContent=daysLeft;
+  if(cw)cw.textContent=weeksLeft+'w';
+  if(cp)cp.textContent=prepPct+'%';
+  // Color urgency
+  if(cd){
+    cd.style.color=daysLeft<=30?'var(--red)':daysLeft<=90?'var(--amber)':'var(--green)';
+  }
 }
 
 // FOCUS TIMER
@@ -3611,7 +3692,7 @@ function buildModalRows(subjName){
 }
 
 function showPage(name,btn,skipHistory){
-  if(!skipHistory) history.pushState({page:name},'',location.pathname+'#'+name);
+  try{if(!skipHistory)history.pushState({page:name},'',location.pathname+'#'+name);}catch(e){}
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(b=>b.classList.remove('active'));
   document.getElementById('page-'+name).classList.add('active');
@@ -3653,7 +3734,7 @@ window.addEventListener('popstate', e=>{
 });
 // Set initial history state
 window.addEventListener('load',()=>{
-  if(!history.state) history.replaceState({page:'dashboard'},'',location.pathname+'#dashboard');
+  try{if(!history.state)history.replaceState({page:'dashboard'},'',location.pathname+'#dashboard');}catch(e){}
 });
 </script>
 
