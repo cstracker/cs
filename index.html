@@ -1250,7 +1250,7 @@ canvas#mockGraph{width:100%;height:100%;}
           <span style="font-size:18px">🎯</span>
           <div>
             <div style="font-size:11px;color:var(--text3);font-weight:600;text-transform:uppercase;letter-spacing:.08em">GATE CSE 2027</div>
-            <div style="font-size:12px;color:var(--text2);margin-top:1px">1 Feb 2027 · Stay consistent!</div>
+            <div style="font-size:12px;color:var(--text2);margin-top:1px">1 Feb 2027 · Study + PYQ + Practice + Tests</div>
           </div>
         </div>
         <div style="display:flex;gap:16px;align-items:center">
@@ -1264,7 +1264,7 @@ canvas#mockGraph{width:100%;height:100%;}
           </div>
           <div style="text-align:center">
             <div id="cd-pct" style="font-family:var(--mono);font-size:18px;font-weight:700;color:var(--green);line-height:1">—</div>
-            <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.08em;margin-top:2px">prep done</div>
+            <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.08em;margin-top:2px">topics done</div>
           </div>
         </div>
       </div>
@@ -2894,7 +2894,6 @@ function refreshDashboard(){
 }
 function updateCountdown(){
   const exam=new Date('2027-02-01T00:00:00');
-  const prepStart=new Date('2025-06-01T00:00:00'); // approx prep start
   const now=new Date();
   const msLeft=exam-now;
   if(msLeft<0){
@@ -2904,19 +2903,25 @@ function updateCountdown(){
   }
   const daysLeft=Math.ceil(msLeft/(1000*60*60*24));
   const weeksLeft=Math.floor(daysLeft/7);
-  const totalPrep=Math.max(1,Math.ceil((exam-prepStart)/(1000*60*60*24)));
-  const elapsed=Math.max(0,Math.ceil((now-prepStart)/(1000*60*60*24)));
-  const prepPct=Math.min(100,Math.round(elapsed/totalPrep*100));
+
+  // Prep % = (Study done + PYQ done + Practice done + tests done)
+  //          / (total Study + total PYQ + total Practice + total subjects) * 100
+  let totalSlots=0, doneSlots=0;
+  SUBJ_DEFAULTS.forEach((s,i)=>{
+    const p0=topicPct(s.name,0); // Study
+    const p1=topicPct(s.name,1); // PYQ
+    const p2=topicPct(s.name,2); // Practice
+    totalSlots += p0.total + p1.total + p2.total + 1; // +1 for test
+    doneSlots  += p0.done  + p1.done  + p2.done + (ST.subjectTestDone[i]?1:0);
+  });
+  const prepPct=totalSlots>0?Math.round(doneSlots/totalSlots*100):0;
+
   const cd=document.getElementById('cd-days');
   const cw=document.getElementById('cd-weeks');
   const cp=document.getElementById('cd-pct');
-  if(cd)cd.textContent=daysLeft;
+  if(cd){cd.textContent=daysLeft;cd.style.color=daysLeft<=30?'var(--red)':daysLeft<=90?'var(--amber)':'var(--green)';}
   if(cw)cw.textContent=weeksLeft+'w';
-  if(cp)cp.textContent=prepPct+'%';
-  // Color urgency
-  if(cd){
-    cd.style.color=daysLeft<=30?'var(--red)':daysLeft<=90?'var(--amber)':'var(--green)';
-  }
+  if(cp){cp.textContent=prepPct+'%';cp.style.color=prepPct>=75?'var(--green)':prepPct>=40?'var(--amber)':'var(--text2)';}
 }
 
 // FOCUS TIMER
@@ -3446,11 +3451,16 @@ function _showNextSessNotif(){
   // Compute how far through the session we are
   const {h:ih,m:im}=istNow(); const nm=ih*60+im;
   const p=parseTimeStr(row.time);
-  const startMin=(row.hh!=null&&row.hh>=0)?row.hh*60+(row.mm||0):(p.sh!=null?p.sh*60+(p.sm||0):nm);
-  const endMin=(p.eh!=null)?p.eh*60+(p.em||0):(startMin+120);
+  // Always parse from time string — row.hh/mm may be stale if user edited DB directly
+  let startMin=(p.sh!=null)?p.sh*60+(p.sm||0):nm;
+  let endMin=(p.eh!=null)?p.eh*60+(p.em||0):null;
+  // Fix PM end time if end appears before start (bare time range like "7:00-9:00")
+  if(endMin!=null && endMin<=startMin && p.eh>=1 && p.eh<=11){endMin+=12*60;}
+  if(endMin==null||endMin<=startMin) endMin=startMin+120;
   const durMin=Math.max(1,endMin-startMin);
   const minsLeft=Math.max(0,endMin-nm);
-  const pct=Math.min(100,Math.round(((nm-startMin)/durMin)*100));
+  // At session start time pct=0, increases as session progresses
+  const pct=Math.min(100,Math.max(0,Math.round(((nm-startMin)/durMin)*100)));
 
   document.getElementById('sess-notif-card').innerHTML=`
     <div class="sess-notif-header">
