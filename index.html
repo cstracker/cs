@@ -2911,8 +2911,8 @@ function updateCountdown(){
     const p0=topicPct(s.name,0); // Study
     const p1=topicPct(s.name,1); // PYQ
     //const p2=topicPct(s.name,2); // Practice
-    totalSlots += p0.total + p1.total + p2.total + 1; // +1 for test
-    doneSlots  += p0.done  + p1.done  + p2.done + (ST.subjectTestDone[i]?1:0);
+    totalSlots += p0.total + p1.total + 1; // +1 for test
+    doneSlots  += p0.done  + p1.done + (ST.subjectTestDone[i]?1:0);
   });
   const prepPct=totalSlots>0?Math.round(doneSlots/totalSlots*100):0;
 
